@@ -71,7 +71,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 /* steps */
 .steps{background:var(--band);color:var(--bandink)}
 .steps ol{list-style:none;margin:2.5rem 0 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:2rem}
-.steps li{border-top:3px solid var(--c2);padding-top:1rem}
+.steps li{position:relative;isolation:isolate;border-top:3px solid var(--c2);padding-top:1rem}
 .steps li b{display:block;font:3.2rem/1 "Young Serif",Georgia,serif;margin-bottom:.6rem}
 .steps h3{font-size:1.5rem;margin-bottom:.4rem}
 .steps p{margin:0;max-width:34ch}
@@ -128,3 +128,47 @@ body.open .drawer{transform:none;visibility:visible}
 .wing{transform-box:fill-box;transform-origin:50% 100%;animation:flap .14s linear infinite alternate}
 @keyframes flap{to{transform:scaleY(.3)}}
 @media (hover:none){.bee{display:none}}
+
+/* curseur : louche à miel */
+html.dip,html.dip *{cursor:none!important}
+html.dip input,html.dip textarea{cursor:text!important}
+.cur{position:fixed;left:0;top:0;width:96px;height:96px;z-index:100;pointer-events:none;opacity:0;transition:opacity .2s;will-change:transform}
+.cur.on{opacity:1}
+.cur.off{opacity:0}
+.cur svg{display:block;width:100%;height:100%;overflow:visible;transform-origin:16px 83px;transition:transform .25s cubic-bezier(.3,1.5,.5,1);filter:drop-shadow(2px 4px 3px rgba(36,18,0,.3))}
+.cur.hot svg{transform:scale(1.15) rotate(-6deg)}
+.hang{transform-box:fill-box;transform-origin:50% 0;animation:hang 2.4s ease-in infinite}
+@keyframes hang{0%{transform:scaleY(.35)}85%{transform:scaleY(1.25)}100%{transform:scaleY(.35)}}
+.dr{position:fixed;width:8px;height:8px;z-index:99;pointer-events:none;border-radius:0 50% 50% 50%;background:radial-gradient(circle at 35% 35%,#F9E6A8,#F2A900 45%,#CC6F00);transform:rotate(45deg)}
+
+.bee.land .wing{animation-duration:.9s}
+
+/* étapes : une animation qui illustre chaque étape */
+.steps li{position:relative}
+.steps li>:not(.anim){position:relative;z-index:1}
+.anim{position:absolute;top:.6rem;right:0;width:104px;height:auto;overflow:visible;z-index:0;pointer-events:none}
+.il-bg{fill:var(--band)}
+.il-o{stroke:var(--bandink);stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+/* couloir libre à droite du texte pour l’illustration */
+.steps h3{max-width:calc(100% - 108px)}
+.steps p{max-width:min(34ch,calc(100% - 108px))}
+/* 1 · cadre qui sort de la ruche */
+.il-fr{animation:il-fr 4.2s ease-in-out infinite var(--sd,0s)}
+@keyframes il-fr{0%{transform:translateY(46px)}30%,70%{transform:translateY(0)}100%{transform:translateY(46px)}}
+/* 2 · extracteur qui tourne, gouttes projetées, flocon (à froid) */
+.il-spin{transform-origin:52px 64px;animation:il-spin 2.2s linear infinite var(--sd,0s)}
+@keyframes il-spin{to{transform:rotate(360deg)}}
+.il-dp{transform-origin:52px 64px;transform:rotate(var(--a)) translateX(24px);animation:il-fly 1.8s ease-out infinite var(--dl,0s)}
+@keyframes il-fly{0%{transform:rotate(var(--a)) translateX(4px);opacity:1}85%{opacity:1}100%{transform:rotate(var(--a)) translateX(31px);opacity:0}}
+.il-snow{transform-box:fill-box;transform-origin:center;animation:il-spin 9s linear infinite}
+/* 3 · pot qui se remplit, couvercle, étiquette */
+.il-jg{animation:il-jg 5s linear infinite var(--sd,0s)}
+@keyframes il-jg{0%{opacity:0}4%{opacity:1}94%{opacity:1}100%{opacity:0}}
+.il-hl{transform-box:fill-box;transform-origin:50% 100%;animation:il-hl 5s ease-in-out infinite var(--sd,0s)}
+@keyframes il-hl{0%{transform:scaleY(0)}50%,100%{transform:scaleY(1)}}
+.il-stm{opacity:0;animation:il-stm 5s linear infinite var(--sd,0s)}
+@keyframes il-stm{0%{opacity:0}4%,48%{opacity:1}56%,100%{opacity:0}}
+.il-lid{animation:il-lid 5s linear infinite var(--sd,0s)}
+@keyframes il-lid{0%,58%{transform:translateY(-36px);opacity:0}62%{opacity:1}70%{transform:translateY(3px)}74%,100%{transform:translateY(0);opacity:1}}
+.il-lbl{animation:il-lbl 5s linear infinite var(--sd,0s)}
+@keyframes il-lbl{0%,76%{opacity:0}86%,100%{opacity:1}}

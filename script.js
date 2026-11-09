@@ -97,20 +97,104 @@ $('#drawer').inert=true;grid();renderCart();
   addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;if(!seen){seen=true;x=mx;y=my}bee.classList.add('on')});
   document.documentElement.addEventListener('mouseleave',()=>bee.classList.remove('on'));
   const loop=t=>{
-    const card=seen&&!document.body.classList.contains('open')?document.elementFromPoint(mx,my)?.closest('.card'):null;
+    const under=seen&&!document.body.classList.contains('open')?document.elementFromPoint(mx,my):null;
+    const card=under?under.closest('.card'):null,step=!card&&under?under.closest('.steps li'):null;
     let tx,ty;
     if(card){ /* posée en vol stationnaire au-dessus du pot */
       const im=card.querySelector('.art img'),r=im.getBoundingClientRect();
       tx=r.left+r.width/2;ty=r.top+r.height*(+im.dataset.top||0)-14+Math.sin(t/260)*5;
+    }else if(step){ /* se pose sur l’illustration de l’étape */
+      const r=(step.querySelector('.anim')||step).getBoundingClientRect();
+      tx=r.left+r.width*.5;ty=r.top+r.height*.05-10+Math.sin(t/500)*1.5;
     }else{ /* suit la souris en zigzaguant un peu */
-      tx=mx+22+Math.cos(t/190)*7;ty=my-24+Math.sin(t/140)*7;
+      tx=mx-36+Math.cos(t/190)*7;ty=my-30+Math.sin(t/140)*7;
     }
     const vx=(tx-x)*.12;x+=vx;y+=(ty-y)*.12;
     if(Math.abs(vx)>.6)face=vx>0?1:-1;
-    tilt+=((card?0:Math.max(-22,Math.min(22,vx*1.6)))-tilt)*.15;
+    bee.classList.toggle('land',!!step);
+    tilt+=((card||step?0:Math.max(-22,Math.min(22,vx*1.6)))-tilt)*.15;
     sv.style.transform=`scaleX(${face})`;
     bee.style.transform=`translate(${x-19}px,${y-16}px) rotate(${tilt}deg)`;
     requestAnimationFrame(loop);
   };
   requestAnimationFrame(loop);
+})();
+
+/* curseur : louche à miel qui goutte */
+(()=>{
+  if(!matchMedia('(hover:hover) and (pointer:fine)').matches)return;
+  const cur=document.createElement('div');
+  cur.className='cur';cur.setAttribute('aria-hidden','true');
+  cur.innerHTML=`<svg viewBox="0 0 96 96"><defs>
+<linearGradient id="hw" x1="0" x2="1"><stop offset="0" stop-color="#E9B56A"/><stop offset="1" stop-color="#B8742A"/></linearGradient>
+<linearGradient id="hh" x1="0" x2="1"><stop offset="0" stop-color="#F9E6A8"/><stop offset=".4" stop-color="#F2A900"/><stop offset="1" stop-color="#CC6F00"/></linearGradient></defs>
+<g transform="translate(50 34) rotate(35)">
+<rect x="-2.6" y="-40" width="5.2" height="76" rx="2.6" fill="url(#hw)"/>
+<rect x="-10" y="30" width="20" height="30" rx="9" fill="url(#hh)"/>
+<path d="M-9 38h18M-10 44h20M-10 50h20M-8.5 56h17" stroke="#CC6F00" stroke-width="1.8" stroke-linecap="round" opacity=".85"/>
+<path d="M-6 36v18" stroke="#fff" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/>
+<path class="hang" d="M-4 58q0 9 4 12q4-3 4-12z" fill="url(#hh)"/></g></svg>`;
+  document.body.appendChild(cur);
+  document.documentElement.classList.add('dip');
+  let mx=0,my=0;
+  addEventListener('mousemove',e=>{
+    mx=e.clientX;my=e.clientY;
+    cur.style.transform=`translate(${mx-16}px,${my-83}px)`;
+    cur.classList.add('on');
+    cur.classList.toggle('off',!!e.target.closest('input,textarea'));
+    cur.classList.toggle('hot',!!e.target.closest('a,button,.chip'));
+  },{passive:true});
+  document.documentElement.addEventListener('mouseleave',()=>cur.classList.remove('on'));
+  if(RM)return;
+  const drop=()=>{ /* une goutte se détache du miel au bout de la louche */
+    if(!cur.classList.contains('on')||cur.classList.contains('off')||document.hidden)return;
+    const d=document.createElement('i');d.className='dr';
+    d.style.left=(mx-9.8)+'px';d.style.top=(my+3.5)+'px';
+    document.body.appendChild(d);
+    const dy=Math.max(40,Math.min(240,innerHeight-my-10));
+    d.animate([
+      {transform:'translateY(0) rotate(45deg) scale(.6)',opacity:1},
+      {transform:`translateY(${dy*.15}px) rotate(45deg) scale(1)`,opacity:1,offset:.12},
+      {transform:`translateY(${dy}px) rotate(45deg) scale(.9)`,opacity:0}
+    ],{duration:900,easing:'cubic-bezier(.5,0,1,.7)'}).onfinish=()=>d.remove();
+  };
+  setTimeout(()=>{drop();setInterval(drop,2400)},2040);
+})();
+
+/* étapes : une petite animation qui illustre chaque étape */
+(()=>{
+  const hx=(cx,cy,r)=>`M${cx} ${cy-r}l${(r*.866).toFixed(2)} ${r/2}v${r}l${(-r*.866).toFixed(2)} ${r/2}l${(-r*.866).toFixed(2)} ${-r/2}v${-r}z`;
+  const cells=[[40.5,29],[52.6,29],[64.7,29],[46.6,39.5],[58.7,39.5],[40.5,50],[52.6,50],[64.7,50]].map(([x,y])=>hx(x,y,7)).join('');
+  const jarP='M22 52q0-10 10-10h40q10 0 10 10v44q0 10-10 10H32q-10 0-10-10z';
+  const A=[
+    /* 1 · Récolte : un cadre de miel sort de la ruche */
+    `<svg class="anim" viewBox="0 0 104 120" aria-hidden="true">
+<g class="il-fr"><rect x="34" y="19" width="37" height="43" fill="#F2A900"/><path d="${cells}" fill="none" stroke="#CC6F00" stroke-width="1.2"/><rect class="il-o" x="34" y="19" width="37" height="43" fill="none"/><rect class="il-o" x="25" y="13" width="55" height="6" rx="2" fill="#CC6F00"/></g>
+<rect class="il-bg" x="14" y="62" width="76" height="46" rx="4"/>
+<rect class="il-o" x="14" y="62" width="76" height="46" rx="4" fill="rgba(242,169,0,.18)"/>
+<path class="il-o" d="M14 85h76" fill="none"/></svg>`,
+    /* 2 · Extraction à froid : l’extracteur tourne, le miel est projeté */
+    `<svg class="anim" viewBox="0 0 104 120" aria-hidden="true">
+<circle class="il-bg" cx="52" cy="64" r="36"/>
+<circle class="il-o" cx="52" cy="64" r="36" fill="rgba(242,169,0,.18)"/>
+<circle cx="52" cy="64" r="29" fill="rgba(242,169,0,.25)"/>
+<g class="il-spin"><rect x="23" y="60.5" width="58" height="7" rx="3.5" fill="#CC6F00"/><rect x="48.5" y="35" width="7" height="58" rx="3.5" fill="#CC6F00"/><rect x="23" y="57" width="10" height="14" rx="2" fill="#F2A900"/><rect x="71" y="57" width="10" height="14" rx="2" fill="#F2A900"/><rect x="45" y="35" width="14" height="10" rx="2" fill="#F2A900"/><rect x="45" y="83" width="14" height="10" rx="2" fill="#F2A900"/></g>
+${[20,80,140,200,260,320].map((a,k)=>`<circle class="il-dp" cx="52" cy="64" r="2.8" fill="#F2A900" style="--a:${a}deg;--dl:${(-k*.3).toFixed(1)}s"/>`).join('')}
+<circle cx="52" cy="64" r="5" style="fill:var(--bandink)"/>
+<path class="il-snow" d="M90 7V25M82.2 11.5L97.8 20.5M82.2 20.5L97.8 11.5" fill="none" stroke-width="2" stroke-linecap="round" style="stroke:var(--bandink)"/></svg>`,
+    /* 3 · Mise en pot : le pot se remplit, reçoit son couvercle puis son étiquette */
+    `<svg class="anim" viewBox="0 0 104 120" aria-hidden="true"><defs><clipPath id="ij"><path d="${jarP}"/></clipPath></defs>
+<g class="il-jg">
+<path d="M44 0h16l-4 9h-8z" fill="#CC6F00"/>
+<path d="${jarP}" fill="rgba(242,169,0,.15)"/>
+<rect class="il-stm" x="49" y="9" width="6" height="97" rx="3" fill="#F2A900"/>
+<g clip-path="url(#ij)"><rect class="il-hl" x="20" y="50" width="64" height="58" fill="#F2A900"/></g>
+<path class="il-o" d="${jarP}" fill="none"/>
+<g class="il-lid"><rect x="25" y="28" width="54" height="14" rx="4" fill="#CC6F00"/><rect class="il-o" x="25" y="28" width="54" height="14" rx="4" fill="none"/></g>
+<g class="il-lbl"><rect x="32" y="64" width="40" height="26" rx="5" fill="#F9E6A8" stroke="#CC6F00" stroke-width="1.5"/><path d="M40 74h24M43 81h18" stroke="#4D2A00" stroke-width="2" stroke-linecap="round"/></g></g></svg>`
+  ];
+  document.querySelectorAll('.steps li').forEach((li,i)=>{
+    li.insertAdjacentHTML('afterbegin',A[i]||'');
+    li.style.setProperty('--sd',`${-i*.9}s`);
+  });
 })();
